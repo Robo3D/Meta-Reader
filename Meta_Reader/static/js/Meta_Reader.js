@@ -1,7 +1,7 @@
 /*
- * View model for OctoPrint-Meta_reader
+ * View model for Meta_Reader
  *
- * Author: Matt Pedler
+ * Author: Robo3D
  * License: AGPLv3
  */
 $(function() {

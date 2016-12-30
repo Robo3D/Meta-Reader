@@ -7,27 +7,27 @@
 plugin_identifier = "Meta_Reader"
 
 # The plugin's python package, should be "octoprint_<plugin identifier>", has to be unique
-plugin_package = "octoprint_Meta_Reader"
+plugin_package = "Meta_Reader"
 
 # The plugin's human readable name. Can be overwritten within OctoPrint's internal data via __plugin_name__ in the
 # plugin module
-plugin_name = "OctoPrint-Meta_reader"
+plugin_name = "Meta_Reader"
 
 # The plugin's version. Can be overwritten within OctoPrint's internal data via __plugin_version__ in the plugin module
 plugin_version = "0.1.0"
 
 # The plugin's description. Can be overwritten within OctoPrint's internal data via __plugin_description__ in the plugin
 # module
-plugin_description = """A Plugin that will extract meta data for Cura And Simplify 3D sliced GCodes"""
+plugin_description = """TODO"""
 
 # The plugin's author. Can be overwritten within OctoPrint's internal data via __plugin_author__ in the plugin module
-plugin_author = "Matt Pedler"
+plugin_author = "Robo3D"
 
 # The plugin's author's mail address.
 plugin_author_email = "MattP@Robo3D.com"
 
 # The plugin's homepage URL. Can be overwritten within OctoPrint's internal data via __plugin_url__ in the plugin module
-plugin_url = "https://github.com/Robo3D/OctoPrint-Meta_reader"
+plugin_url = "https://github.com/Robo3d/Meta_Reader"
 
 # The plugin's license. Can be overwritten within OctoPrint's internal data via __plugin_license__ in the plugin module
 plugin_license = "AGPLv3"

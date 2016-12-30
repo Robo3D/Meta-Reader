@@ -1,2 +1,2 @@
 include README.md
-recursive-include octoprint_Meta_Reader *
+recursive-include Meta_Reader *

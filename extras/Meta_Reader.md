@@ -2,17 +2,17 @@
 layout: plugin
 
 id: Meta_Reader
-title: OctoPrint-Meta_reader
-description: A Plugin that will extract meta data for Cura And Simplify 3D sliced GCodes
-author: Matt Pedler
+title: Meta_Reader
+description: TODO
+author: Robo3D
 license: AGPLv3
 
 # TODO
 date: today's date in format YYYY-MM-DD, e.g. 2015-04-21
 
-homepage: https://github.com/Robo3D/OctoPrint-Meta_reader
-source: https://github.com/Robo3D/OctoPrint-Meta_reader
-archive: https://github.com/ximidar/OctoPrint-Meta_reader/archive/master.zip
+homepage: https://github.com/Robo3d/Meta_Reader
+source: https://github.com/Robo3d/Meta_Reader
+archive: https://github.com/Robo3d/Meta_Reader/archive/master.zip
 
 # TODO set this to true if your plugin uses the dependency_links setup parameter to include
 # library versions not yet published on PyPi. SHOULD ONLY BE USED IF THERE IS NO OTHER OPTION!
