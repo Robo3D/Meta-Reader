@@ -1,11 +1,13 @@
 # coding=utf-8
 from __future__ import absolute_import
-from Meta_Reader import Meta_Reader
+from File_Reader import File_Reader
 import octoprint.plugin
+from threading import Timer
 
 class Meta_readerPlugin(octoprint.plugin.SettingsPlugin,
                         octoprint.plugin.AssetPlugin,
                         octoprint.plugin.TemplatePlugin,
+                        octoprint.plugin.StartupPlugin,
                         octoprint.plugin.EventHandlerPlugin):
 
     def __init__(self, **kwargs):
@@ -15,11 +17,17 @@ class Meta_readerPlugin(octoprint.plugin.SettingsPlugin,
     
     def on_after_startup(self):
         self._logger.info("Meta Reader started up")
-        self.meta = Meta_Reader(self)
+        self.meta = File_Reader(self)
         self.update()
 
     def update(self):
         self.meta.check_files()
+
+        if self.printing != True:
+            self.meta.analyeze_files()
+
+        timer = Timer(1,self.update)
+        timer.start()
         
     def on_event(self,event, payload):
 
@@ -33,45 +41,45 @@ class Meta_readerPlugin(octoprint.plugin.SettingsPlugin,
             self.printing = False
         elif event == "FileDeselected":
             self.printing = False
-	##~~ SettingsPlugin mixin
+    ##~~ SettingsPlugin mixin
 
-	def get_settings_defaults(self):
-		return dict(
-			# put your plugin's default settings here
-		)
+    def get_settings_defaults(self):
+        return dict(
+            # put your plugin's default settings here
+        )
 
-	##~~ AssetPlugin mixin
+    ##~~ AssetPlugin mixin
 
-	def get_assets(self):
-		# Define your plugin's asset files to automatically include in the
-		# core UI here.
-		return dict(
-			js=["js/Meta_Reader.js"],
-			css=["css/Meta_Reader.css"],
-			less=["less/Meta_Reader.less"]
-		)
+    def get_assets(self):
+        # Define your plugin's asset files to automatically include in the
+        # core UI here.
+        return dict(
+            js=["js/Meta_Reader.js"],
+            css=["css/Meta_Reader.css"],
+            less=["less/Meta_Reader.less"]
+        )
 
-	##~~ Softwareupdate hook
+    ##~~ Softwareupdate hook
 
-	def get_update_information(self):
-		# Define the configuration for your plugin to use with the Software Update
-		# Plugin here. See https://github.com/foosel/OctoPrint/wiki/Plugin:-Software-Update
-		# for details.
-		return dict(
-			Meta_Reader=dict(
-				displayName="Meta_reader Plugin",
-				displayVersion=self._plugin_version,
+    def get_update_information(self):
+        # Define the configuration for your plugin to use with the Software Update
+        # Plugin here. See https://github.com/foosel/OctoPrint/wiki/Plugin:-Software-Update
+        # for details.
+        return dict(
+            Meta_Reader=dict(
+                displayName="Meta_reader Plugin",
+                displayVersion=self._plugin_version,
 
-				# version check: github repository
-				type="github_release",
-				user="Robo3d",
-				repo="Meta_Reader",
-				current=self._plugin_version,
+                # version check: github repository
+                type="github_release",
+                user="Robo3d",
+                repo="Meta_Reader",
+                current=self._plugin_version,
 
-				# update method: pip
-				pip="https://github.com/Robo3d/Meta_Reader/archive/{target_version}.zip"
-			)
-		)
+                # update method: pip
+                pip="https://github.com/Robo3d/Meta_Reader/archive/{target_version}.zip"
+            )
+        )
 
 
 # If you want your plugin to be registered within OctoPrint under a different name than what you defined in setup.py
@@ -80,11 +88,10 @@ class Meta_readerPlugin(octoprint.plugin.SettingsPlugin,
 __plugin_name__ = "Meta_reader Plugin"
 
 def __plugin_load__():
-	global __plugin_implementation__
-	__plugin_implementation__ = Meta_readerPlugin()
+    global __plugin_implementation__
+    __plugin_implementation__ = Meta_readerPlugin()
 
-	global __plugin_hooks__
-	__plugin_hooks__ = {
-		"octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information
-	}
-
+    global __plugin_hooks__
+    __plugin_hooks__ = {
+        "octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information
+    }

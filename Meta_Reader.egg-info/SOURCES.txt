@@ -1,7 +1,9 @@
 MANIFEST.in
 README.md
 setup.py
+Meta_Reader/Meta_Reader.py
 Meta_Reader/__init__.py
+Meta_Reader/__init__.pyc
 Meta_Reader.egg-info/PKG-INFO
 Meta_Reader.egg-info/SOURCES.txt
 Meta_Reader.egg-info/dependency_links.txt
