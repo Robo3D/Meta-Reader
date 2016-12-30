@@ -3,6 +3,8 @@ import re
 import os
 import octoprint.filemanager
 import os.path
+import traceback
+
 
 class File_Reader():
     def __init__(self, oprint):
@@ -33,27 +35,36 @@ class File_Reader():
         #list all files
         files = self.oprint._file_manager.list_files(octoprint.filemanager.FileDestinations.LOCAL)
         
-        
         if 'local' in files:
             for file in files['local']:
                 if self.check_saved_data(file) != False:
-                    self.logger.info("Already has Meta Data")
-                else:
-                    self.logger.info("No Meta Data")
+                    #self.logger.info("Already has Meta Data")
+                    pass
+                elif file not in self.needed_updates:
                     path = self.oprint._file_manager.path_on_disk(octoprint.filemanager.FileDestinations.LOCAL, file)
-                    self.logger.info(path)
-                    if file not in self.needed_updates:
-                        self.needed_updates[file] = path
-                    else:
-                        self.Logger.info("No need to add to the list")
+                    self.logger.info("adding: " + path)
+                    self.needed_updates[file] = path
+        return
 
     def analyze_files(self):
         if len(self.needed_updates) > 0:
             key = self.needed_updates.iterkeys().next()
             path = self.needed_updates[key]
             del self.needed_updates[key]
-            self.logger.info("Analyzing file: " + str(path))
-            self.detirmine_slicer(path)
+            self.logger.info("Analyzing file: " + str(key))
+
+            try:
+                self.detirmine_slicer(path)
+            except Exception as e:
+                self.logger.info("!!!!!!!!!!!!!!!!!!!Exception: " + str(e))
+                traceback.print_exc()
+                #delete all pending files since they will be regenerated
+                del self.needed_updates
+                self.needed_updates = {}
+                return
+
+
+            
                             
 
     def detirmine_slicer(self,filename):
@@ -70,15 +81,14 @@ class File_Reader():
                 _simplify = re.findall(simplify3d, line)
             
                 if _cura != []:
-                    self.logger.info("Sliced with Cura")
+                    #self.logger.info("Sliced with Cura")
                     meta = self.cura_meta_reader(filename)
                     break
                 elif _simplify != []:
-                    self.logger.info("Sliced with Simplify 3D")
+                    #self.logger.info("Sliced with Simplify 3D")
                     meta = self.simplify_meta_reader(filename)
                     break
                
-        file.close()
         if meta == None:
             meta = {
                 'layer height' : "--",
@@ -119,9 +129,6 @@ class File_Reader():
                     if _cura_in != []:
                         
                         _infill = float(_cura_in[0])
-
-
-        file.close()
         
         meta = {
             'layer height' : _layer_height,
@@ -159,9 +166,6 @@ class File_Reader():
 
                     if _s3d_in != []:
                         _infill = int(_s3d_in[0])
-                    
-
-        file.close()
 
         meta = {
             'layer height' : _layer_height,

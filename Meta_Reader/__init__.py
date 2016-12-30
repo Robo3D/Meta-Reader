@@ -1,8 +1,11 @@
 # coding=utf-8
 from __future__ import absolute_import
-from File_Reader import File_Reader
+from .File_Reader import File_Reader
 import octoprint.plugin
+import threading
 from threading import Timer
+import traceback
+
 
 class Meta_reader(octoprint.plugin.SettingsPlugin,
                         octoprint.plugin.AssetPlugin,
@@ -16,18 +19,22 @@ class Meta_reader(octoprint.plugin.SettingsPlugin,
 
     
     def on_after_startup(self):
-        self._logger.info("Meta Reader started up")
+        #self._logger.info("##################### Meta Reader started up")
         self.meta = File_Reader(self)
-        self.update()
-
+        thread = threading.Thread(target=self.update, args=())
+        thread.start()
     def update(self):
-        self.meta.check_files()
-
-        if self.printing != True:
-            self.meta.analyeze_files()
-
-        timer = Timer(1,self.update)
-        timer.start()
+        #self._logger.info("Loop Start")
+        while 1:
+            try:
+                self.meta.check_files()
+    
+                if self.printing == False:
+                    self.meta.analyze_files()
+            except Exception as e:
+                self._logger.info("!!!!!!!!!!!!!!!!!!!Exception: " + str(e))
+                traceback.print_exc()
+       
         
     def on_event(self,event, payload):
 
