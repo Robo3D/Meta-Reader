@@ -93,7 +93,11 @@ class File_Reader():
             meta = {
                 'layer height' : "--",
                 'layers' : "--",
-                'infill' : "--"
+                'infill' : "--",
+                'time' : {'hours': '0', 
+                          'minutes': '0',
+                          'seconds': '0'
+                          }
             }
         self.save_data(meta, filename)
         return meta
@@ -104,11 +108,17 @@ class File_Reader():
         _layer_height = "--"
         _layers = "--"
         _infill = "--"
+        _hours = "0"
+        _minutes = "0"
+        _time = 0
+        _time_dict = {}
+
         meta = {}
 
         cura_lh = "layer_height = ([0-9.]+)"
         cura_ls = ";LAYER_COUNT:([0-9.]+)"
         cura_in = "sparse_density = ([0-9.]+)"
+        cura_time = ";TIME:([0-9.]+)"
 
         #read first 200 lines for Layer height
         with open(_filename, 'r') as file:
@@ -118,6 +128,7 @@ class File_Reader():
                     _cura_ls = re.findall(cura_ls, line)
                     _cura_lh = re.findall(cura_lh, line)
                     _cura_in = re.findall(cura_in, line)
+                    _cura_time = re.findall(cura_time, line)
     
                     if _cura_lh != []:
                         _layer_height = float(_cura_lh[0])                
@@ -129,24 +140,53 @@ class File_Reader():
                     if _cura_in != []:
                         
                         _infill = float(_cura_in[0])
+
+                    if _cura_time != []:
+                        _time = int(_cura_time[0])
+                        _time_dict = self.parse_time(_time)
         
         meta = {
             'layer height' : _layer_height,
             'layers' : _layers,
-            'infill' : _infill
+            'infill' : _infill,
+            'time' : {'hours': str(_time_dict['hours']), 
+                          'minutes': str(_time_dict['minutes']),
+                          'seconds': str(_time_dict['seconds'])
+                          }
         }
         return meta
+
+    # This takes a number in seconds and returns a dictionary of the hours/minutes/seconds
+    def parse_time(self, time):
+        m, s = divmod(time, 60)
+        h, m = divmod(m, 60)
+
+        time_dict = {'hours': str(h),
+                     'minutes': str(m),
+                     'seconds': str(s)
+                     }
+
+        return time_dict
+
+
+
 
     #This method reads the file to get the unread meta data from it. if there is none then it returns nothing
     def simplify_meta_reader(self, _filename):
         _layer_height = "--"
         _layers = "--"
         _infill = "--"
+        _hours = "0"
+        _minutes = "0"
         meta = {}
 
         s3d_lh = ";   layerHeight,([0-9.]+)"
         s3d_ls = "; layer ([0-9.]+)"
         s3d_in = ";   infillPercentage,([0-9.]+)"
+
+        #looks like ;   Build time: 3 hours 5 minutes
+
+        s3d_time = ";   Build time: ([0-9.]+) hours ([0-9.]+) minutes"
 
         #read first 200 lines for Layer height
         with open(_filename, 'r') as file:
@@ -157,6 +197,8 @@ class File_Reader():
                     _s3d_lh = re.findall(s3d_lh, line)
                     _s3d_ls = re.findall(s3d_ls, line)
                     _s3d_in = re.findall(s3d_in, line)
+                    _s3d_time = re.findall(s3d_time, line)
+                   
     
                     if _s3d_lh != []:
                         _layer_height = float(_s3d_lh[0])
@@ -167,10 +209,20 @@ class File_Reader():
                     if _s3d_in != []:
                         _infill = int(_s3d_in[0])
 
+                    if _s3d_time != []:
+                        _hours = _s3d_time[0][0]
+                        _minutes = _s3d_time[0][1]
+
+                    
+
         meta = {
             'layer height' : _layer_height,
             'layers' : _layers,
-            'infill' : _infill
+            'infill' : _infill,
+            'time' : {'hours': str(_hours), 
+                          'minutes': str(_minutes),
+                          'seconds': '0'
+                          }
         }
         return meta
 
