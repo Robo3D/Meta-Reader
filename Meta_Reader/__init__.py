@@ -1,10 +1,13 @@
 # coding=utf-8
 from __future__ import absolute_import
-from .File_Reader import File_Reader
 import octoprint.plugin
+
+from .File_Reader import File_Reader
 import threading
 from threading import Timer
 import traceback
+import time
+
 
 
 class Meta_reader(octoprint.plugin.SettingsPlugin,
@@ -16,25 +19,36 @@ class Meta_reader(octoprint.plugin.SettingsPlugin,
     def __init__(self, **kwargs):
         # super(Meta_Reader,self).__init__(**kwargs)
         self.printing = False
-
+        self.spinning = False
+        
     
     def on_after_startup(self):
         #self._logger.info("##################### Meta Reader started up")
         self.meta = File_Reader(self)
-        thread = threading.Thread(target=self.update, args=())
-        thread.start()
+
     def update(self):
-        #self._logger.info("Loop Start")
-        while 1:
-            try:
-                self.meta.check_files()
-    
-                if self.printing == False:
+        
+        self.spinning = True
+        try:
+            self.meta.check_files()
+
+            if self.printing == False:
+                if len(self.meta.needed_updates) > 0:
                     self.meta.analyze_files()
-            except Exception as e:
-                self._logger.info("!!!!!!!!!!!!!!!!!!!Exception: " + str(e))
-                traceback.print_exc()
-       
+                    thread = Timer(1, self.update)
+                    thread.start()
+                else:
+                    self._logger.info("No more files Stopped looping")
+                    self.spinning = False
+
+        except Exception as e:
+            self._logger.info("!!!!!!!!!!!!!!!!!!!Exception: " + str(e))
+            traceback.print_exc()
+
+    def analyze_files(self):
+        if self.spinning == False:
+            self._logger.info("Started Analyzing files")
+            self.update()
         
     def on_event(self,event, payload):
 
@@ -102,3 +116,6 @@ def __plugin_load__():
     __plugin_hooks__ = {
         "octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information
     }
+
+    global __plugin_helpers__
+    __plugin_helpers__ = dict(start_analysis = __plugin_implementation__.analyze_files)

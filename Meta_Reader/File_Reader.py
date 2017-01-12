@@ -4,6 +4,7 @@ import os
 import octoprint.filemanager
 import os.path
 import traceback
+import time
 
 
 class File_Reader():
@@ -44,6 +45,7 @@ class File_Reader():
                     path = self.oprint._file_manager.path_on_disk(octoprint.filemanager.FileDestinations.LOCAL, file)
                     self.logger.info("adding: " + path)
                     self.needed_updates[file] = path
+                
         return
 
     def analyze_files(self):
@@ -62,6 +64,8 @@ class File_Reader():
                 del self.needed_updates
                 self.needed_updates = {}
                 return
+        else:
+            return False
 
 
             
