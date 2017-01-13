@@ -114,6 +114,7 @@ class File_Reader():
         _infill = "--"
         _hours = "0"
         _minutes = "0"
+        _seconds = "0"
         _time = 0
         _time_dict = {}
 
@@ -148,15 +149,21 @@ class File_Reader():
                     if _cura_time != []:
                         _time = int(_cura_time[0])
                         _time_dict = self.parse_time(_time)
-        
+                        _hours = _time_dict['hours']
+                        _minutes = _time_dict['minutes']
+                        _seconds = _time_dict['seconds']
+                    
+
+       
+            
         meta = {
             'layer height' : _layer_height,
             'layers' : _layers,
             'infill' : _infill,
-            'time' : {'hours': str(_time_dict['hours']), 
-                          'minutes': str(_time_dict['minutes']),
-                          'seconds': str(_time_dict['seconds'])
-                          }
+            'time' : {'hours': str(_hours), 
+                      'minutes': str(_minutes),
+                      'seconds': str(_seconds)
+                      }
         }
         return meta
 

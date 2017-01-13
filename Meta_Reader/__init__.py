@@ -48,7 +48,9 @@ class Meta_reader(octoprint.plugin.SettingsPlugin,
     def analyze_files(self):
         if self.spinning == False:
             self._logger.info("Started Analyzing files")
-            self.update()
+            thread = Timer(1, self.update)
+            thread.start()
+        return
         
     def on_event(self,event, payload):
 
