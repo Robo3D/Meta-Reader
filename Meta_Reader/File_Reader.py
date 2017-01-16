@@ -124,27 +124,21 @@ class File_Reader():
         cura_ls = ";LAYER_COUNT:([0-9.]+)"
         cura_in = "sparse_density = ([0-9.]+)"
         cura_time = ";TIME:([0-9.]+)"
+        identifier = ";End of Gcode"
 
-        #read first 200 lines for Layer height
+        record_meta = False
+        raw_meta = ""
+
+       
         with open(_filename, 'r') as file:
 
             for line in file:
                 if line[0] == ';':
                     _cura_ls = re.findall(cura_ls, line)
-                    _cura_lh = re.findall(cura_lh, line)
-                    _cura_in = re.findall(cura_in, line)
                     _cura_time = re.findall(cura_time, line)
-    
-                    if _cura_lh != []:
-                        _layer_height = float(_cura_lh[0])                
-    
+                    
                     if _cura_ls != []:
-                        
                         _layers = int(_cura_ls[0])
-
-                    if _cura_in != []:
-                        
-                        _infill = float(_cura_in[0])
 
                     if _cura_time != []:
                         _time = int(_cura_time[0])
@@ -152,9 +146,33 @@ class File_Reader():
                         _hours = _time_dict['hours']
                         _minutes = _time_dict['minutes']
                         _seconds = _time_dict['seconds']
+
+                    if re.match(identifier, line):
+                        record_meta = True
+
+                    if record_meta:
+                        raw_meta += line
                     
 
-       
+        #This block makes the raw meta readable to the re functions
+        raw_meta = raw_meta.replace(";SETTING_3 ", "")
+        raw_meta = raw_meta.replace(identifier, "")
+        raw_meta = raw_meta.replace("\\\\n", " ")
+        raw_meta = raw_meta.replace("layer_height_0", "layer_height")
+        raw_meta = raw_meta.splitlines()
+
+        new_meta = ''
+        for line in raw_meta:
+            new_meta += line
+
+        _cura_in = re.findall(cura_in, new_meta)
+        _cura_lh = re.findall(cura_lh, new_meta)
+        if _cura_lh != []:
+            _layer_height = float(_cura_lh[0])
+
+        if _cura_in != []: 
+            _infill = float(_cura_in[0])
+        
             
         meta = {
             'layer height' : _layer_height,
