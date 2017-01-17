@@ -90,17 +90,17 @@ class Meta_reader(octoprint.plugin.SettingsPlugin,
         # for details.
         return dict(
             Meta_Reader=dict(
-                displayName="Meta_reader Plugin",
+                displayName="Meta_reader",
                 displayVersion=self._plugin_version,
 
                 # version check: github repository
                 type="github_release",
                 user="Robo3d",
-                repo="Meta_Reader",
+                repo="Meta-Reader",
                 current=self._plugin_version,
 
                 # update method: pip
-                pip="https://github.com/Robo3d/Meta_Reader/archive/{target_version}.zip"
+                pip="https://github.com/Robo3D/Meta-Reader/archive/{target_version}.zip"
             )
         )
 
