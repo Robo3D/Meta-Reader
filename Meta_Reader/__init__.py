@@ -3,11 +3,7 @@ from __future__ import absolute_import
 import octoprint.plugin
 
 from .File_Reader import File_Reader
-import threading
-from threading import Timer
-import traceback
-import time
-
+from multiprocessing import Process
 
 
 class Meta_reader(octoprint.plugin.SettingsPlugin,
@@ -35,7 +31,7 @@ class Meta_reader(octoprint.plugin.SettingsPlugin,
             if self.printing == False:
                 if len(self.meta.needed_updates) > 0:
                     self.meta.analyze_files()
-                    thread = Timer(1, self.update)
+                    thread = Process(target = self.update, args=() )
                     thread.start()
                 else:
                     self._logger.info("No more files Stopped looping")
@@ -48,7 +44,7 @@ class Meta_reader(octoprint.plugin.SettingsPlugin,
     def analyze_files(self):
         if self.spinning == False:
             self._logger.info("Started Analyzing files")
-            thread = Timer(1, self.update)
+            thread = Process(target = self.update, args=() )
             thread.start()
         return
         
