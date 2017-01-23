@@ -54,12 +54,16 @@ class Meta_reader(octoprint.plugin.SettingsPlugin,
             self.printing = True
         elif event == 'PrintFailed':
             self.printing = False
+            self.analyze_files()
         elif event == 'PrintDone':
             self.printing = False
+            self.analyze_files()
         elif event == 'PrintCancelled':
             self.printing = False
+            self.analyze_files()
         elif event == "FileDeselected":
             self.printing = False
+            self.analyze_files()
     ##~~ SettingsPlugin mixin
 
     def get_settings_defaults(self):
