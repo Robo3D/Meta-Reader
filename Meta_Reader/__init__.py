@@ -5,6 +5,7 @@ import octoprint.plugin
 from .File_Reader import File_Reader
 from multiprocessing import Process
 from threading import Timer
+import traceback
 
 
 
@@ -18,37 +19,47 @@ class Meta_reader(octoprint.plugin.SettingsPlugin,
         # super(Meta_Reader,self).__init__(**kwargs)
         self.printing = False
         self.spinning = False
+        self.thread = Process(target = self.update, args=() )
         
     
     def on_after_startup(self):
         #self._logger.info("##################### Meta Reader started up")
         self.meta = File_Reader(self)
+        pass
 
     def update(self):
         
         
         try:
+            #initialize list
             self.meta.check_files()
 
-            if self.printing == False:
-                if len(self.meta.needed_updates) > 0:
+            #analyze list
+            while len(self.meta.needed_updates) > 0:
+                #check if we need to update list
+                self.meta.check_files()
+                
+                #analyze files
+                if self.printing == False:
                     self.meta.analyze_files()
-                    thread = Timer(0.1, self.update)
-                    thread.start()
                 else:
-                    self._logger.info("No more files Stopped looping")
-                    self.spinning = False
+                    break
+                    
+            self._logger.info("No more files  or printer started printing. Stopped looping")
+            self.spinning = False
 
         except Exception as e:
             self._logger.info("!!!!!!!!!!!!!!!!!!!Exception: " + str(e))
             traceback.print_exc()
 
     def analyze_files(self):
-        if self.spinning == False:
+        self._logger.info("Spinning = " + str(self.thread.is_alive()))
+        if self.thread.is_alive() == False:
+
+            self.thread = Process(target = self.update, args=() )
             self.spinning = True
             self._logger.info("Started Analyzing files")
-            thread = Process(target = self.update, args=() )
-            thread.start()
+            self.thread.start()
         return
         
     def on_event(self,event, payload):
