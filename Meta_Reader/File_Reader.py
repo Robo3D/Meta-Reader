@@ -30,6 +30,9 @@ class File_Reader():
                                                filename,
                                                'robo_data',
                                                data)
+        robodata = [data, filename]
+        self.oprint.child_pipe.send(robodata)
+
 
 
     def check_files(self):

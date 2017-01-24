@@ -3,9 +3,13 @@ from __future__ import absolute_import
 import octoprint.plugin
 
 from .File_Reader import File_Reader
-from multiprocessing import Process
-from threading import Timer
+from multiprocessing import Process, Pipe
+#from threading import Timer, Thread
 import traceback
+import thread
+
+#for saving meta data
+import octoprint.filemanager
 
 
 
@@ -19,16 +23,19 @@ class Meta_reader(octoprint.plugin.SettingsPlugin,
         # super(Meta_Reader,self).__init__(**kwargs)
         self.printing = False
         self.spinning = False
-        self.thread = Process(target = self.update, args=() )
+        self.child_pipe, self.parent_pipe = Pipe()
+        self.meta_process = Process(target = self.update, args=(self.child_pipe, ) )
+        
         
     
     def on_after_startup(self):
-        #self._logger.info("##################### Meta Reader started up")
-        self.meta = File_Reader(self)
+        self._logger.info("Starting the Meta Reader")
         pass
 
-    def update(self):
-        
+    def update(self, pipe):
+
+        self.child_pipe = pipe
+        self.meta = File_Reader(self)
         
         try:
             #initialize list
@@ -53,14 +60,35 @@ class Meta_reader(octoprint.plugin.SettingsPlugin,
             traceback.print_exc()
 
     def analyze_files(self):
-        self._logger.info("Spinning = " + str(self.thread.is_alive()))
-        if self.thread.is_alive() == False:
+        self._logger.info("Spinning = " + str(self.meta_process.is_alive()))
+        if self.meta_process.is_alive() == False:
 
-            self.thread = Process(target = self.update, args=() )
+            #Start the Meta Process
+            self.meta_process = Process(target = self.update, args=(self.child_pipe, ) )
             self.spinning = True
             self._logger.info("Started Analyzing files")
-            self.thread.start()
+            self.meta_process.start()
+
+
         return
+
+    def collect_meta_data(self):
+        if self.meta_process.is_alive():
+            poll = self.parent_pipe.poll()
+            if poll:
+                collected_data = self.parent_pipe.recv()
+                self._logger.info("Recieving Data From Process")
+                if len(collected_data) > 0:
+                    self._logger.info("Collected Data: " + str(collected_data))
+                    self.save_data(collected_data[0], collected_data[1])
+
+    #This function will save meta data to the machine
+    def save_data(self, data, filename):
+        self._file_manager.set_additional_metadata(octoprint.filemanager.FileDestinations.LOCAL,
+                                               filename,
+                                               'robo_data',
+                                               data)
+
         
     def on_event(self,event, payload):
 
@@ -134,4 +162,5 @@ def __plugin_load__():
     }
 
     global __plugin_helpers__
-    __plugin_helpers__ = dict(start_analysis = __plugin_implementation__.analyze_files)
+    __plugin_helpers__ = dict(start_analysis = __plugin_implementation__.analyze_files,
+                              collect_data = __plugin_implementation__.collect_meta_data)
