@@ -17,6 +17,7 @@ class Meta_reader(octoprint.plugin.SettingsPlugin,
                         octoprint.plugin.AssetPlugin,
                         octoprint.plugin.TemplatePlugin,
                         octoprint.plugin.StartupPlugin,
+                        octoprint.plugin.ShutdownPlugin,
                         octoprint.plugin.EventHandlerPlugin):
 
     def __init__(self, **kwargs):
@@ -25,7 +26,12 @@ class Meta_reader(octoprint.plugin.SettingsPlugin,
         self.spinning = False
         self.child_pipe, self.parent_pipe = Pipe()
         self.meta_process = Process(target = self.update, args=(self.child_pipe, ) )
-        
+
+    #for when Octoprint exits
+    def on_shutdown(self):
+        self.parent_pipe.send(["Exit"])
+        self.meta_process.join()
+        self._logger.info("Meta Reader Terminated")
         
     
     def on_after_startup(self):
@@ -44,6 +50,11 @@ class Meta_reader(octoprint.plugin.SettingsPlugin,
             #analyze list
             while len(self.meta.needed_updates) > 0:
                 #check if we need to update list
+                if self.child_pipe.poll():
+                    code = self.child_pipe.recv()
+                    if len(code) > 0:
+                        self._logger.info("Meta Child Process Stopping")
+                        break
                 self.meta.check_files()
                 
                 #analyze files
@@ -94,6 +105,7 @@ class Meta_reader(octoprint.plugin.SettingsPlugin,
 
         if event == 'PrintStarted':
             self.printing = True
+            self.parent_pipe.send(["Exit"])
         elif event == 'PrintFailed':
             self.printing = False
             self.analyze_files()
