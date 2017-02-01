@@ -4,12 +4,14 @@ import octoprint.plugin
 
 from .File_Reader import File_Reader
 from multiprocessing import Process, Pipe
+import multiprocessing
 #from threading import Timer, Thread
 import traceback
 import thread
 
 #for saving meta data
 import octoprint.filemanager
+import sys
 
 
 
@@ -29,8 +31,9 @@ class Meta_reader(octoprint.plugin.SettingsPlugin,
 
     #for when Octoprint exits
     def on_shutdown(self):
-        self.parent_pipe.send(["Exit"])
-        self.meta_process.join()
+        for child in multiprocessing.active_children():
+            self._logger.info("Killed Child")
+            child.terminate()
         self._logger.info("Meta Reader Terminated")
         
     
@@ -63,12 +66,14 @@ class Meta_reader(octoprint.plugin.SettingsPlugin,
                 else:
                     break
                     
-            self._logger.info("No more files  or printer started printing. Stopped looping")
+            self._logger.info("Stopped looping")
             self.spinning = False
+            sys.exit()
 
         except Exception as e:
             self._logger.info("!!!!!!!!!!!!!!!!!!!Exception: " + str(e))
             traceback.print_exc()
+            sys.exit()
 
     def analyze_files(self):
         self._logger.info("Spinning = " + str(self.meta_process.is_alive()))
