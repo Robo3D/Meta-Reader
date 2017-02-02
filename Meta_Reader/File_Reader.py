@@ -16,8 +16,8 @@ class File_Reader():
         self.logger = self.oprint._logger
         self.needed_updates = {}
 
-    def check_saved_data(self, filename):
-        saved_data = self.oprint._file_manager.get_metadata(octoprint.filemanager.FileDestinations.LOCAL, filename)
+    def check_saved_data(self, path):
+        saved_data = self.oprint._file_manager.get_metadata(octoprint.filemanager.FileDestinations.LOCAL, path)
     
         if 'robo_data' in saved_data:
             return saved_data['robo_data']
@@ -25,31 +25,37 @@ class File_Reader():
             return False
 
     #This function will save meta data to the machine
-    def save_data(self, data, filename):
+    def save_data(self, data, filename, path):
         self.oprint._file_manager.set_additional_metadata(octoprint.filemanager.FileDestinations.LOCAL,
-                                               filename,
+                                               path,
                                                'robo_data',
                                                data)
-        robodata = [data, filename]
+        robodata = [data, filename, path]
         self.oprint.child_pipe.send(robodata)
 
 
 
     def check_files(self):
         #list all files
-        files = self.oprint._file_manager.list_files(octoprint.filemanager.FileDestinations.LOCAL)
+        files = self.oprint._file_manager.list_files(recursive=True)
         
-        if 'local' in files:
-            for file in files['local']:
-                if self.check_saved_data(file) != False:
-                    #self.logger.info("Already has Meta Data")
+        self.recursive_file_check(files['local'], 0)
+
+    def recursive_file_check(self, folder, depth):
+
+        for file in folder:
+            if folder[file]['type'] == 'machinecode':
+                if self.check_saved_data(folder[file]['path']) != False:
                     pass
-                elif file not in self.needed_updates:
-                    path = self.oprint._file_manager.path_on_disk(octoprint.filemanager.FileDestinations.LOCAL, file)
-                    self.logger.info("adding: " + path)
-                    self.needed_updates[file] = path
-                
-        return
+                elif folder[file]['path'] not in self.needed_updates:
+                    path = self.oprint._file_manager.path_on_disk(octoprint.filemanager.FileDestinations.LOCAL, folder[file]['path'])
+                    self.logger.info("adding: " + path + " Rec Depth = " + str(depth))
+                    self.needed_updates[folder[file]['path']] = path
+
+            elif folder[file]['type'] == 'folder':
+                new_folder = folder[file]['children']
+                self.recursive_file_check(new_folder, depth + 1)
+
 
     def analyze_files(self):
         if len(self.needed_updates) > 0:
@@ -59,7 +65,7 @@ class File_Reader():
             self.logger.info("Analyzing file: " + str(key))
 
             try:
-                self.detirmine_slicer(path)
+                self.detirmine_slicer(path, key)
             except Exception as e:
                 self.logger.info("!!!!!!!!!!!!!!!!!!!Exception: " + str(e))
                 traceback.print_exc()
@@ -74,7 +80,7 @@ class File_Reader():
             
                             
 
-    def detirmine_slicer(self,filename):
+    def detirmine_slicer(self,filename, path):
         cura = ";Generated with Cura_SteamEngine ([0-9.]+)"
         simplify3d = "Simplify3D"
         meta = None
@@ -106,7 +112,7 @@ class File_Reader():
                           'seconds': '0'
                           }
             }
-        self.save_data(meta, filename)
+        self.save_data(meta, filename, path)
         return meta
         
 

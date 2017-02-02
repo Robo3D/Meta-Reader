@@ -12,6 +12,7 @@ import thread
 #for saving meta data
 import octoprint.filemanager
 import sys
+import os
 
 
 
@@ -42,7 +43,7 @@ class Meta_reader(octoprint.plugin.SettingsPlugin,
         pass
 
     def update(self, pipe):
-
+        self._logger.info("Started a process at " + str(os.getpid()))
         self.child_pipe = pipe
         self.meta = File_Reader(self)
         
@@ -66,13 +67,14 @@ class Meta_reader(octoprint.plugin.SettingsPlugin,
                 else:
                     break
                     
-            self._logger.info("Stopped looping")
+            self._logger.info("Process " + str(os.getpid()) +" Exiting" )
             self.spinning = False
             sys.exit()
 
         except Exception as e:
             self._logger.info("!!!!!!!!!!!!!!!!!!!Exception: " + str(e))
             traceback.print_exc()
+            self._logger.info("Process " + str(os.getpid()) +" Exiting" )
             sys.exit()
 
     def analyze_files(self):
@@ -88,20 +90,21 @@ class Meta_reader(octoprint.plugin.SettingsPlugin,
 
         return
 
+    #this function collects data from the pipe when it is available. It is fired off by a parent program
+    #so it does not interfere with the UI Since they run within the same processing space
     def collect_meta_data(self):
-        if self.meta_process.is_alive():
-            poll = self.parent_pipe.poll()
-            if poll:
-                collected_data = self.parent_pipe.recv()
-                self._logger.info("Recieving Data From Process")
-                if len(collected_data) > 0:
-                    self._logger.info("Collected Data: " + str(collected_data))
-                    self.save_data(collected_data[0], collected_data[1])
+        poll = self.parent_pipe.poll()
+        if poll:
+            collected_data = self.parent_pipe.recv()
+            self._logger.info("Recieving Data From Process")
+            if len(collected_data) > 0:
+                self._logger.info("Collected Data: " + str(collected_data))
+                self.save_data(collected_data[0], collected_data[1], collected_data[2])
 
     #This function will save meta data to the machine
-    def save_data(self, data, filename):
+    def save_data(self, data, filename, path):
         self._file_manager.set_additional_metadata(octoprint.filemanager.FileDestinations.LOCAL,
-                                               filename,
+                                               path,
                                                'robo_data',
                                                data)
 
@@ -121,6 +124,9 @@ class Meta_reader(octoprint.plugin.SettingsPlugin,
             self.printing = False
             self.analyze_files()
         elif event == "FileDeselected":
+            self.printing = False
+            self.analyze_files()
+        elif event == "Upload":
             self.printing = False
             self.analyze_files()
     ##~~ SettingsPlugin mixin
