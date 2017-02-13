@@ -42,6 +42,10 @@ class File_Reader():
         self.recursive_file_check(files['local'], 0)
 
     def recursive_file_check(self, folder, depth):
+        #protection against a max recursion depth error
+        if depth > 50:
+            self.logger.info("Max Recursion Depth Reached. Why do you have folder 50 layers deep?")
+            return
 
         for file in folder:
             if folder[file]['type'] == 'machinecode':
@@ -92,11 +96,22 @@ class File_Reader():
             
                 _cura = re.findall(cura, line)
                 _simplify = re.findall(simplify3d, line)
+                
             
                 if _cura != []:
                     #self.logger.info("Sliced with Cura")
-                    meta = self.cura_meta_reader(filename)
-                    break
+
+                    #If the file is 15.04 it was most likely sliced with the onboard slicer, which saves it's own metadata
+                    self.logger.info(str(_cura))
+                    if _cura[0] == '15.04':
+                        self.logger.info("Sliced with old cura " + str(_cura[0]))
+                        meta = self.check_saved_data(path)
+                        break
+                    else:
+                        self.logger.info("Sliced with new cura " + str(_cura[0]))
+                        meta = self.cura_meta_reader(filename)
+                        break
+
                 elif _simplify != []:
                     #self.logger.info("Sliced with Simplify 3D")
                     meta = self.simplify_meta_reader(filename)
@@ -112,8 +127,9 @@ class File_Reader():
                           'seconds': '0'
                           }
             }
-        self.save_data(meta, filename, path)
-        return meta
+        elif meta != False:
+            self.save_data(meta, filename, path)
+            return meta
         
 
     #This method reads the file to get the unread meta data from it. if there is none then it returns nothing
