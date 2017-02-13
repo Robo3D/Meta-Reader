@@ -106,6 +106,8 @@ class File_Reader():
                     if _cura[0] == '15.04':
                         self.logger.info("Sliced with old cura " + str(_cura[0]))
                         meta = self.check_saved_data(path)
+                        if meta == False:
+                            meta = self.cura_meta_reader(filename)
                         break
                     else:
                         self.logger.info("Sliced with new cura " + str(_cura[0]))
@@ -116,8 +118,12 @@ class File_Reader():
                     #self.logger.info("Sliced with Simplify 3D")
                     meta = self.simplify_meta_reader(filename)
                     break
+
+                
+
                
         if meta == None:
+            self.logger.info("Using Empty Data")
             meta = {
                 'layer height' : "--",
                 'layers' : "--",
@@ -127,7 +133,11 @@ class File_Reader():
                           'seconds': '0'
                           }
             }
-        elif meta != False:
+            self.save_data(meta, filename, path)
+            return meta
+        elif meta != False and meta != None:
+            self.logger.info("Using saved Data")
+            
             self.save_data(meta, filename, path)
             return meta
         
