@@ -70,8 +70,7 @@ class Meta_reader(octoprint.plugin.SettingsPlugin,
                 self._logger.info("Collected Data: " + str(collected_data))
                 if collected_data[0] != False:
                     self.save_data(collected_data[0], collected_data[1], collected_data[2])
-                else:
-                    self._logger.info("Did not Save Meta Data")
+                
 
     #This function will save meta data to the machine
     def save_data(self, data, filename, path):
