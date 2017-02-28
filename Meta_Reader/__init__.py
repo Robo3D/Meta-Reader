@@ -86,21 +86,6 @@ class Meta_reader(octoprint.plugin.SettingsPlugin,
         if event == 'PrintStarted':
             self.printing = True
             self.parent_pipe.send(["Exit"])
-        elif event == 'PrintFailed':
-            self.printing = False
-            self.analyze_files()
-        elif event == 'PrintDone':
-            self.printing = False
-            self.analyze_files()
-        elif event == 'PrintCancelled':
-            self.printing = False
-            self.analyze_files()
-        elif event == "FileDeselected":
-            self.printing = False
-            self.analyze_files()
-        elif event == "Upload":
-            self.printing = False
-            self.analyze_files()
     ##~~ SettingsPlugin mixin
 
     def get_settings_defaults(self):
