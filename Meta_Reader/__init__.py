@@ -28,7 +28,8 @@ class Meta_reader(octoprint.plugin.SettingsPlugin,
         self.printing = False
         self.spinning = False
         self.child_pipe, self.parent_pipe = Pipe()
-        self.meta_process = Process(target = self.update, args=(self.child_pipe, ) )
+        self.files = {}
+        self.meta_process = Process(target = File_Reader, args=(self.child_pipe, self.files, ) )
 
     #for when Octoprint exits
     def on_shutdown(self):
@@ -42,47 +43,15 @@ class Meta_reader(octoprint.plugin.SettingsPlugin,
         self._logger.info("Starting the Meta Reader")
         pass
 
-    def update(self, pipe):
-        self._logger.info("Started a process at " + str(os.getpid()))
-        self.child_pipe = pipe
-        self.meta = File_Reader(self)
-        
-        try:
-            #initialize list
-            self.meta.check_files()
+    
 
-            #analyze list
-            while len(self.meta.needed_updates) > 0:
-                #check if we need to update list
-                if self.child_pipe.poll():
-                    code = self.child_pipe.recv()
-                    if len(code) > 0:
-                        self._logger.info("Meta Child Process Stopping")
-                        break
-                self.meta.check_files()
-                
-                #analyze files
-                if self.printing == False:
-                    self.meta.analyze_files()
-                else:
-                    break
-                    
-            self._logger.info("Process " + str(os.getpid()) +" Exiting" )
-            self.spinning = False
-            sys.exit()
-
-        except Exception as e:
-            self._logger.info("!!!!!!!!!!!!!!!!!!!Exception: " + str(e))
-            traceback.print_exc()
-            self._logger.info("Process " + str(os.getpid()) +" Exiting" )
-            sys.exit()
-
-    def analyze_files(self):
+    def analyze_files(self, files):
         self._logger.info("Spinning = " + str(self.meta_process.is_alive()))
         if self.meta_process.is_alive() == False:
 
             #Start the Meta Process
-            self.meta_process = Process(target = self.update, args=(self.child_pipe, ) )
+            self.files = files
+            self.meta_process = Process(target = File_Reader, args=(self.child_pipe, self.files, ) )
             self.spinning = True
             self._logger.info("Started Analyzing files")
             self.meta_process.start()

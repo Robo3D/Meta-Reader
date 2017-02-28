@@ -1,23 +1,58 @@
 import subprocess
 import re
+import sys
 import os
-import octoprint.filemanager
 import os.path
 import traceback
 import time
+from multiprocessing import Pipe
+import logging
 
 
 class File_Reader():
-    def __init__(self, oprint):
-        #self.filename = _filename
-        # self.gcode_name = os.path.basename(_filename)
-        #.get_metadata(octoprint.filemanager.FileDestinations.LOCAL, self.gcode_name)
-        self.oprint = oprint
-        self.logger = self.oprint._logger
+    def __init__(self, child_pipe, file_dict):
+        self.cpipe = child_pipe
+        logging.basicConfig(filename='/home/pi/.octoprint/logs/octoprint.log', level=logging.DEBUG)
+        self.logger = logging
+        self.logger.info("File Reader Started")
+        self.files = file_dict
         self.needed_updates = {}
+        self.update()
 
-    def check_saved_data(self, path):
-        saved_data = self.oprint._file_manager.get_metadata(octoprint.filemanager.FileDestinations.LOCAL, path)
+    def update(self):
+        self.logger.info("Started a process at " + str(os.getpid()))
+        if self.files == {}:
+            self.logger.info("Process " + str(os.getpid()) +" Exiting" )
+            sys.exit()
+            return
+        
+        try:
+            #initialize list
+            self.check_files()
+
+            #analyze list
+            while len(self.needed_updates) > 0:
+                #check if we need to update list
+                if self.cpipe.poll():
+                    code = self.cpipe.recv()
+                    if len(code) > 0:
+                        self.logger.info("Meta Child Process Stopping")
+                        break                
+                #analyze files
+                self.analyze_files()
+                
+            self.logger.info("Process " + str(os.getpid()) +" Exiting" )
+            self.spinning = False
+            sys.exit()
+
+        except Exception as e:
+            self.logger.info("!!!!!!!!!!!!!!!!!!!Exception: " + str(e))
+            traceback.print_exc()
+            self.logger.info("Process " + str(os.getpid()) +" Exiting" )
+            sys.exit()
+
+    def check_saved_data(self, entry):
+        saved_data = entry
     
         if 'robo_data' in saved_data:
             return saved_data['robo_data']
@@ -26,20 +61,14 @@ class File_Reader():
 
     #This function will save meta data to the machine
     def save_data(self, data, filename, path):
-        self.oprint._file_manager.set_additional_metadata(octoprint.filemanager.FileDestinations.LOCAL,
-                                               path,
-                                               'robo_data',
-                                               data)
         robodata = [data, filename, path]
-        self.oprint.child_pipe.send(robodata)
+        self.cpipe.send(robodata)
 
 
 
     def check_files(self):
-        #list all files
-        files = self.oprint._file_manager.list_files(recursive=True)
-        
-        self.recursive_file_check(files['local'], 0)
+        #list all files        
+        self.recursive_file_check(self.files, 0)
 
     def recursive_file_check(self, folder, depth):
         #protection against a max recursion depth error
@@ -49,10 +78,10 @@ class File_Reader():
 
         for file in folder:
             if folder[file]['type'] == 'machinecode':
-                if self.check_saved_data(folder[file]['path']) != False:
+                if self.check_saved_data(folder[file]) != False:
                     pass
                 elif folder[file]['path'] not in self.needed_updates:
-                    path = self.oprint._file_manager.path_on_disk(octoprint.filemanager.FileDestinations.LOCAL, folder[file]['path'])
+                    path = "/home/pi/.octoprint/uploads/" + folder[file]['path']
                     self.logger.info("adding: " + path + " Rec Depth = " + str(depth))
                     self.needed_updates[folder[file]['path']] = path
 
@@ -78,11 +107,7 @@ class File_Reader():
                 self.needed_updates = {}
                 return
         else:
-            return False
-
-
-            
-                            
+            return False              
 
     def detirmine_slicer(self,filename, path):
         cura = ";Generated with Cura_SteamEngine ([0-9.]+)"
