@@ -45,7 +45,7 @@ class Meta_reader(octoprint.plugin.SettingsPlugin,
 
     
 
-    def analyze_files(self, files):
+    def analyze_files(self, files={}, **kwargs):
         self._logger.info("Spinning = " + str(self.meta_process.is_alive()))
         if self.meta_process.is_alive() == False:
 
