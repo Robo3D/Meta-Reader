@@ -8,4 +8,28 @@ Install via the bundled [Plugin Manager](https://github.com/foosel/OctoPrint/wik
 or manually using this URL:
 
     https://github.com/Robo3D/Meta-Reader/archive/master.zip
+    
+    
+# Keywords for Cura 2
 
+```
+layer_height_0
+;LAYER_COUNT:
+sparse_density =
+;TIME:
+```
+
+# Keywords for cura 15
+
+```
+None, Cura 15 Meta comes directly from the slicer
+(This is going to be fixed eventually)
+```
+# Keywords for Simplify 3D
+
+```
+;   layerHeight,
+; layer 
+;   infillPercentage,
+;   Build time: ([0-9.]+) hours ([0-9.]+) minutes
+```
