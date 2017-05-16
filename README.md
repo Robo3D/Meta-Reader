@@ -22,8 +22,11 @@ sparse_density =
 # Keywords for cura 15
 
 ```
-None, Cura 15 Meta comes directly from the slicer
-(This is going to be fixed eventually)
+; infill = 
+; layer height = 
+; time = 
+;Layer count: 
+
 ```
 # Keywords for Simplify 3D
 
