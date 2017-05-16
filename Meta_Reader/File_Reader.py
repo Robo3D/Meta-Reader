@@ -126,11 +126,10 @@ class File_Reader():
                 if _cura != []:
                     #self.logger.info("Sliced with Cura")
 
-                    #If the file is 15.04 it was most likely sliced with the onboard slicer, which saves it's own metadata
                     self.logger.info(str(_cura))
                     if _cura[0] == '15.04':
                         self.logger.info("Sliced with old cura " + str(_cura[0]))
-                        meta = self.check_saved_data(path)
+                        meta = self.cura_1504_reader(filename)
                         break
                     else:
                         self.logger.info("Sliced with new cura " + str(_cura[0]))
@@ -242,6 +241,71 @@ class File_Reader():
                       }
         }
         return meta
+
+
+    def cura_1504_reader(self, _filename):
+        _layer_height = "--"
+        _layers = "--"
+        _infill = "--"
+        _hours = "0"
+        _minutes = "0"
+        _seconds = "0"
+        _time = 0
+        _time_dict = {}
+
+        meta = {}
+
+        cura_lh = "; layer height = ([0-9.]+)"
+        cura_ls = ";Layer count: ([0-9.]+)"
+        cura_in = "; infill = ([0-9.]+)"
+        cura_time = "; time = ([0-9.]+)"
+        
+
+        record_meta = False
+        raw_meta = ""
+
+       
+        with open(_filename, 'r') as file:
+
+            for line in file:
+                if line[0] == ';':
+                    _cura_ls = re.findall(cura_ls, line)
+                    _cura_time = re.findall(cura_time, line)
+                    _cura_lh = re.findall(cura_lh, line)
+                    _cura_in = re.findall(cura_in, line)
+                    
+                    if _cura_ls != []:
+                        _layers = int(_cura_ls[0])
+
+                    if _cura_time != []:
+                        _time = int(_cura_time[0])
+                        _time_dict = self.parse_time(_time)
+                        _hours = _time_dict['hours']
+                        _minutes = _time_dict['minutes']
+                        _seconds = _time_dict['seconds']
+
+                    if _cura_lh != []:
+                        _layer_height = float(_cura_lh[0])
+
+                    if _cura_in != []:
+                        _infill = int(_cura_in[0])
+
+                    
+        
+            
+        meta = {
+            'layer height' : _layer_height,
+            'layers' : _layers,
+            'infill' : _infill,
+            'time' : {'hours': str(_hours), 
+                      'minutes': str(_minutes),
+                      'seconds': str(_seconds)
+                      }
+        }
+        return meta
+
+
+
 
     # This takes a number in seconds and returns a dictionary of the hours/minutes/seconds
     def parse_time(self, time):
