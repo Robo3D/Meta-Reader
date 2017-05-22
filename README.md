@@ -26,7 +26,6 @@ sparse_density =
 ; layer height = 
 ; time = 
 ;Layer count: 
-
 ```
 # Keywords for Simplify 3D
 

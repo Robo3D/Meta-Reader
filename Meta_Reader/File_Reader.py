@@ -338,6 +338,9 @@ class File_Reader():
         #looks like ;   Build time: 3 hours 5 minutes
 
         s3d_time = ";   Build time: ([0-9.]+) hours ([0-9.]+) minutes"
+        s3d_time2 = ";   Build time: ([0-9.]+) hour ([0-9.]+) minutes"
+        s3d_time3 = ";   Build time: ([0-9.]+) hour ([0-9.]+) minute"
+        s3d_time4 = ";   Build time: ([0-9.]+) hours ([0-9.]+) minute"
 
         #read first 200 lines for Layer height
         with open(_filename, 'r') as file:
@@ -349,6 +352,9 @@ class File_Reader():
                     _s3d_ls = re.findall(s3d_ls, line)
                     _s3d_in = re.findall(s3d_in, line)
                     _s3d_time = re.findall(s3d_time, line)
+                    _s3d_time2 = re.findall(s3d_time2, line)
+                    _s3d_time3 = re.findall(s3d_time3, line)
+                    _s3d_time4 = re.findall(s3d_time4, line)
                    
     
                     if _s3d_lh != []:
@@ -363,6 +369,18 @@ class File_Reader():
                     if _s3d_time != []:
                         _hours = _s3d_time[0][0]
                         _minutes = _s3d_time[0][1]
+
+                    if _s3d_time2 != []:
+                        _hours = _s3d_time2[0][0]
+                        _minutes = _s3d_time2[0][1]
+
+                    if _s3d_time3 != []:
+                        _hours = _s3d_time3[0][0]
+                        _minutes = _s3d_time3[0][1]
+                        
+                    if _s3d_time4 != []:
+                        _hours = _s3d_time4[0][0]
+                        _minutes = _s3d_time4[0][1]
 
                     
 
