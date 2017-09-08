@@ -73,7 +73,7 @@ class File_Reader():
     def recursive_file_check(self, folder, depth):
         #protection against a max recursion depth error
         if depth > 50:
-            self.logger.info("Max Recursion Depth Reached. Why do you have folder 50 layers deep?")
+            self.logger.info("Max Recursion Depth Reached. Why do you have folders 50 layers deep?")
             return
 
         for file in folder:
@@ -85,7 +85,7 @@ class File_Reader():
                     self.logger.info("adding: " + path + " Rec Depth = " + str(depth))
                     self.needed_updates[folder[file]['path']] = path
 
-            elif folder[file]['type'] == 'folder':
+            elif folder[file]['type'] == 'folder' and 'children' in folder[file]:
                 new_folder = folder[file]['children']
                 self.recursive_file_check(new_folder, depth + 1)
 
