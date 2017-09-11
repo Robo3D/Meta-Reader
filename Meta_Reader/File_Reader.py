@@ -31,18 +31,21 @@ class File_Reader():
             self.check_files()
 
             #analyze list
-            while len(self.needed_updates) > 0:
-                #check if we need to update list
-                if self.cpipe.poll():
-                    code = self.cpipe.recv()
-                    if len(code) > 0:
-                        self.logger.info("Meta Child Process Stopping")
-                        break                
+            self.length_of_updates = len(self.needed_updates)
+            while self.length_of_updates > 0:
                 #analyze files
                 self.analyze_files()
+
+                #check if we need to update list
+                if self.cpipe.poll():
+                    #get files
+                    files = self.cpipe.recv()
+                    self.logger.info("Files Recieved")
+                    #process added files
+                    self.recursive_file_check(files, 0) 
+                    self.length_of_updates = len(self.needed_updates)                
                 
             self.logger.info("Process " + str(os.getpid()) +" Exiting" )
-            self.spinning = False
             sys.exit()
 
         except Exception as e:
@@ -71,24 +74,24 @@ class File_Reader():
         self.recursive_file_check(self.files, 0)
 
     def recursive_file_check(self, folder, depth):
-        #protection against a max recursion depth error
-        if depth > 50:
-            self.logger.info("Max Recursion Depth Reached. Why do you have folders 50 layers deep?")
-            return
+        if type(folder) is dict:
+            #protection against a max recursion depth error
+            if depth > 50:
+                self.logger.info("Max Recursion Depth Reached. Why do you have folders 50 layers deep?")
+                return
+    
+            for file in folder:
+                if folder[file]['type'] == 'machinecode':
+                    if self.check_saved_data(folder[file]) != False:
+                        pass
+                    elif folder[file]['path'] not in self.needed_updates:
+                        path = "/home/pi/.octoprint/uploads/" + folder[file]['path']
+                        self.logger.info("adding: " + path + " Rec Depth = " + str(depth))
+                        self.needed_updates[folder[file]['path']] = path
 
-        for file in folder:
-            if folder[file]['type'] == 'machinecode':
-                if self.check_saved_data(folder[file]) != False:
-                    pass
-                elif folder[file]['path'] not in self.needed_updates:
-                    path = "/home/pi/.octoprint/uploads/" + folder[file]['path']
-                    self.logger.info("adding: " + path + " Rec Depth = " + str(depth))
-                    self.needed_updates[folder[file]['path']] = path
-
-            elif folder[file]['type'] == 'folder' and 'children' in folder[file]:
-                new_folder = folder[file]['children']
-                self.recursive_file_check(new_folder, depth + 1)
-
+                elif folder[file]['type'] == 'folder' and 'children' in folder[file]:
+                    new_folder = folder[file]['children']
+                    self.recursive_file_check(new_folder, depth + 1)
 
     def analyze_files(self):
         if len(self.needed_updates) > 0:
